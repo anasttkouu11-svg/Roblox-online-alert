@@ -1,0 +1,31 @@
+name: Roblox Online Alert
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check Roblox status
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        run: |
+          response=$(curl -s -X POST \
+            -H "Content-Type: application/json" \
+            -d '{"userIds":[2334071257]}' \
+            https://presence.roblox.com/v1/presence/users)
+
+          status=$(echo "$response" | python -c "import sys,json; print(json.load(sys.stdin)['userPresences'][0]['userPresenceType'])")
+
+          echo "Roblox status: $status"
+
+          if [ "$status" = "2" ]; then
+            curl -s -X POST \
+              -H "Content-Type: application/json" \
+              -d '{"content":"🔔 **emilydance62 is online on Roblox!**"}' \
+              "$DISCORD_WEBHOOK"
+          fi
